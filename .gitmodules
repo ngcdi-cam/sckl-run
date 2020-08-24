@@ -1,0 +1,3 @@
+[submodule "sckl-data"]
+	path = sckl-data
+	url = https://github.com/ngcdi-cam/sckl-data

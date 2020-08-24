@@ -1,11 +1,13 @@
+# run_containers.py base.yaml full.overlay.yaml
+
 constants:
   dataset_name: dataset1
 
   influxdb_q: 0
   cadvisor_q: 0
   prometheus_q: 0
-  mininet_q: 1
-  awareness_q: 1
+  mininet_q: 0
+  awareness_q: 0
 
   agent_sm_q: 0
   agent_fp_q: 0
@@ -54,7 +56,7 @@ constants:
       AWARENESS_SERVER_URL: $^awareness_server_url
       UI_URL: ""
       MONITORING_URL: /stats/port/
-      NODES: ++$da_q
+      NODES: ++$agent_da_q
       KEY_SERVICES: $key_services
     volumes:
       $^sckl_data_dir:
@@ -89,7 +91,8 @@ constants:
   ^agent_common_hooks:
     preup:
       commands:
-      - touch $LOG_FILE
+      - "> $LOG_FILE"
+      - chmod a+w $LOG_FILE
       environment:
       - name: LOG_FILE
         value: $^sckl_core_log_dir++$name++.log
@@ -176,21 +179,6 @@ groups:
             prom1_vol:
               bind: /prometheus
               mode: rw
-  
-  mininet:
-    # currently only supports 0 or 1 mininet instances
-    containers: $mininet_q
-    rules:
-      - value:
-          name: $mininet_hostname
-          hostname: $mininet_hostname
-          image: mbyzhang/mininet
-          privileged: True
-          environment:
-            MN_CONTROLLER_HOST: $awareness_hostname
-            MN_TOPO: mesh,3,3
-          command: ""
-          network: $network_name
     
   awareness:
     # currently only supports 0 or 1 awareness (based on Ryu) instances
@@ -203,6 +191,22 @@ groups:
           network: $network_name
           environment:
             MININET_SERVER_URL: $^mininet_server_url
+  
+    
+  mininet:
+    # currently only supports 0 or 1 mininet instances
+    containers: $mininet_q
+    rules:
+      - value:
+          name: $mininet_hostname
+          hostname: $mininet_hostname
+          image: mbyzhang/mininet
+          privileged: True
+          environment:
+            MN_CONTROLLER_HOST: $awareness_hostname
+            MN_TOPO: custom_mesh
+          command: ""
+          network: $network_name
 
   service_manager:
     constants:

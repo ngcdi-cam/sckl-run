@@ -1,0 +1,2 @@
+constants:
+  ^sckl_data_dir: /nonexistent
