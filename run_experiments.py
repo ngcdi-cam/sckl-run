@@ -16,7 +16,7 @@ BASE_CONFIG = 'configs/base.yaml'
 NETWORK_CONFIG = 'configs/network.overlay.yaml'
 AGENTS_CONFIG = 'configs/agents.overlay.yaml'
 NO_SCKL_DATA_CONFIG = 'configs/no_sckl_data.overlay.yaml'
-
+NO_SCKL_SM_CONFIG = 'configs/agents_nosm.overlay.yaml'
 
 def get_ip_address_of_container(name):
     return subprocess.run(
@@ -162,10 +162,10 @@ def run_experiment(name, ext_agent_configs: list = [], run_agents=False):
             logging.info('Run ' + str(i))
             mininet_trigger_traffic(log, 10)
             throughput = log_awareness_throughput(log)
-            log_awareness_computed_path(log, throughput, 10)
+            log_awareness_computed_path(log, throughput, 800)
 
 
 if __name__ == '__main__':
     run_experiment('plain_awareness')
-    run_experiment('agents_without_overheating', [NO_SCKL_DATA_CONFIG], True)
-    run_experiment('agents_with_overheating', [], True)
+    run_experiment('agents_without_overheating', [NO_SCKL_SM_CONFIG, NO_SCKL_DATA_CONFIG], True)
+    run_experiment('agents_with_overheating', [NO_SCKL_SM_CONFIG], True)
