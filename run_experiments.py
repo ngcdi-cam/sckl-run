@@ -18,6 +18,13 @@ AGENTS_CONFIG = 'configs/agents.overlay.yaml'
 NO_SCKL_DATA_CONFIG = 'configs/no_sckl_data.overlay.yaml'
 NO_SCKL_SM_CONFIG = 'configs/agents_nosm.overlay.yaml'
 
+MININET_COMPLETE_BIPARTITE_TOPO = 'configs/mininet_topos/complete_bipartite.yaml'
+MININET_CUSTOM_TOPO = 'configs/mininet_topos/custom.yaml'
+MININET_MESH_TOPO = 'configs/mininet_topos/mesh.yaml'
+MININET_RING_TOPO = 'configs/mininet_topos/ring.yaml'
+
+MININET_TOPO_BASE_DIR = 'configs/mininet_topos'
+
 def get_ip_address_of_container(name):
     return subprocess.run(
         ['docker', 'inspect', '-f',
@@ -27,7 +34,7 @@ def get_ip_address_of_container(name):
 
 def clean_containers():
     logging.info('Cleaning containers...')
-    subprocess.run('docker stop $(docker ps -q)', shell=True)
+    subprocess.run('docker stop -t 0 $(docker ps -q)', shell=True)
     subprocess.run('docker rm $(docker ps -a -q)', shell=True)
 
 
@@ -95,6 +102,15 @@ def mininet_start_iperf_servers():
         MININET_URL + '/nodes/h2/cmd',
         data='iperf -s -u &')
 
+def mininet_ping():
+    requests.post(
+        MININET_URL + '/nodes/h1/cmd',
+        data='ping -c 10 h2 &'
+    )
+    requests.post(
+        MININET_URL + '/nodes/h2/cmd',
+        data='ping -c 10 h1 &'
+    )
 
 def log_event(file, name, data=''):
     j = json.dumps({'type': name, 'timestamp': time.time(), 'data': data})
@@ -128,7 +144,7 @@ def mininet_trigger_traffic(file, duration=3):
         data=cmd)
 
 
-def run_experiment(name, ext_agent_configs: list = [], run_agents=False):
+def run_experiment(name, ext_agent_configs: list = [], ext_network_configs: list = [], run_agents=False):
     global MININET_URL, AWARENESS_URL
 
     os.makedirs('runs', exist_ok=True)
@@ -139,33 +155,44 @@ def run_experiment(name, ext_agent_configs: list = [], run_agents=False):
         clean_containers()
 
         logging.info('Starting mininet and awareness...')
-        subprocess.run([RUN_CONTAINERS, BASE_CONFIG, NETWORK_CONFIG])
+        subprocess.run([RUN_CONTAINERS, BASE_CONFIG, NETWORK_CONFIG, *ext_network_configs])
 
-        time.sleep(3)
+        # time.sleep(3)
         MININET_URL = 'http://{}:8081'.format(
             get_ip_address_of_container('mininet'))
         AWARENESS_URL = 'http://{}:8080'.format(
             get_ip_address_of_container('awareness'))
         logging.info('Mininet URL is ' + MININET_URL)
         logging.info('Awareness URL is ' + AWARENESS_URL)
+        logging.info('Starting iperf servers...')
         mininet_start_iperf_servers()
+        logging.info('Testing ping')
+        mininet_ping()
         time.sleep(3)
+        
 
         if run_agents:
             logging.info('Starting agents...')
-            subprocess.run([RUN_CONTAINERS, '-w', 'dataset_name', name,
+            subprocess.run([RUN_CONTAINERS, '-w', 'run_name', name,
                             BASE_CONFIG, AGENTS_CONFIG, *ext_agent_configs])
         
-        logging.info('Waiting for awareness to collect network information')
-        time.sleep(10)
-        for i in range(15):
+        # logging.info('Waiting for awareness to collect network information')
+        # time.sleep(10)
+        for i in range(20):
             logging.info('Run ' + str(i))
             mininet_trigger_traffic(log, 10)
             throughput = log_awareness_throughput(log)
-            log_awareness_computed_path(log, throughput, 800)
+            log_awareness_computed_path(log, throughput, 80)
 
+
+def run_experiment_group(topo):
+    topo_file = os.path.join(MININET_TOPO_BASE_DIR, topo + '.yaml')
+    run_experiment(topo + '_plain_awareness', [], [topo_file])
+    run_experiment(topo + '_agents_without_overheating', [NO_SCKL_SM_CONFIG, NO_SCKL_DATA_CONFIG], [topo_file], True)
+    run_experiment(topo + '_agents_with_overheating', [NO_SCKL_SM_CONFIG], [topo_file], True)
 
 if __name__ == '__main__':
-    run_experiment('plain_awareness')
-    run_experiment('agents_without_overheating', [NO_SCKL_SM_CONFIG, NO_SCKL_DATA_CONFIG], True)
-    run_experiment('agents_with_overheating', [NO_SCKL_SM_CONFIG], True)
+    #run_experiment_group('mesh')
+    run_experiment_group('custom')
+    #run_experiment_group('ring')
+    #run_experiment_group('complete_bipartite')

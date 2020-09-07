@@ -1,7 +1,7 @@
 # run_containers.py base.yaml full.overlay.yaml
 
 constants:
-  dataset_name: dataset1
+  run_name: default_run
 
   influxdb_q: 0
   cadvisor_q: 0
@@ -12,6 +12,10 @@ constants:
   agent_sm_q: 0
   agent_fp_q: 0
   agent_da_q: 0
+
+  mininet_topo: custom_mesh
+
+  network_discovery_time: 40 # in seconds
   
   # ==================
   # internal constants
@@ -20,9 +24,9 @@ constants:
   network_name: mas-network
   influxdb_name: ngcdi_metrics
 
-  # needs to be lazy because we are using constants $base_dir and $dataset_name
+  # needs to be lazy because we are using constants $base_dir and $run_name
   # see examples/8-lazy-constants.yaml
-  ^sckl_core_log_dir: $base_dir++/runs/++$dataset_name++/
+  ^sckl_core_log_dir: $base_dir++/runs/++$run_name++/
   ^sckl_data_dir: $base_dir++/sckl-data/condition
 
   awareness_hostname: awareness
@@ -104,7 +108,6 @@ constants:
     preup-global:
       commands:
       - mkdir -p $LOG_DIR
-      - rm ${LOG_DIR}*
       environment:
       - name: LOG_DIR
         value: $^sckl_core_log_dir
@@ -141,7 +144,7 @@ groups:
           privileged: True
           mem_limit: 350m
           mem_reservation: 300m
-          network: $network
+          network: $network_name
           ports:
             8080: 9080
           volumes:
@@ -164,6 +167,17 @@ groups:
   
   prometheus: 
     containers: $prometheus_q
+    hooks:
+      preup-global:
+        commands:
+          - sed "s/RUNNAME/$RUNNAME/" $CONFIG_FILE_TEMPLATE > $CONFIG_FILE
+        environment:
+          - name: RUNNAME
+            value: $run_name
+          - name: CONFIG_FILE_TEMPLATE
+            value: $base_dir++/configs/prometheus/config.template.yml
+          - name: CONFIG_FILE
+            value: $base_dir++/configs/prometheus/config.yml
     rules:
       - value:
           image: prom/prometheus:latest
@@ -175,7 +189,7 @@ groups:
           ports: 
             9091: 9090
           volumes:
-            $base_dir++/prometheus/config.yml:
+            $base_dir++/configs/prometheus/config.yml:
               bind: /etc/prometheus/prometheus.yml
               mode: ro
             prom1_vol:
@@ -206,10 +220,18 @@ groups:
           privileged: True
           environment:
             MN_CONTROLLER_HOST: $awareness_hostname
-            MN_TOPO: custom_mesh
+            MN_TOPO: $mininet_topo
           command: ""
           network: $network_name
-
+    hooks:
+      postup-global:
+        commands:
+          - test $MININET_Q -ge 1 && sleep $TIME
+        environment:
+          - name: MININET_Q
+            value: $mininet_q
+          - name: TIME
+            value: $network_discovery_time
   service_manager:
     constants:
       name_prefix: seed

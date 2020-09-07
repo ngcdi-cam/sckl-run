@@ -1,0 +1,2 @@
+constants:
+    mininet_topo: custom_ring
