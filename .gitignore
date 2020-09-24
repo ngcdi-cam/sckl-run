@@ -3,3 +3,4 @@ runs/
 .vscode/
 __pycache__/
 target/
+configs/prometheus/config.yml

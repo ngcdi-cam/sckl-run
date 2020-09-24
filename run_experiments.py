@@ -197,8 +197,6 @@ def run_experiment(name, ext_agent_configs: list = [], ext_network_configs: list
             subprocess.run([RUN_CONTAINERS, '-w', 'run_name', name,
                             BASE_CONFIG, AGENTS_CONFIG, *ext_network_configs, *ext_agent_configs, NO_NETWORK_CONFIG])
         
-        # logging.info('Waiting for awareness to collect network information')
-        # time.sleep(10)
         for i in range(20):
             logging.info('Run ' + str(i))
             mininet_trigger_traffic(log, 10)
@@ -213,7 +211,7 @@ def run_experiment_group(network_topo, agent_topo):
     agent_topo_file = os.path.join(AGENT_TOPO_BASE_DIR, agent_topo + '.yaml')
     prefix = network_topo + '_ag' + agent_topo
 
-    # run_experiment(prefix + '_plain_awareness', [], [network_topo_file])
+    run_experiment(prefix + '_plain_awareness', [], [network_topo_file])
     run_experiment(prefix + '_agents_without_overheating', [NO_SCKL_DATA_CONFIG, agent_topo_file], [network_topo_file], True)
     run_experiment(prefix + '_agents_with_overheating', [agent_topo_file], [network_topo_file], True)
 

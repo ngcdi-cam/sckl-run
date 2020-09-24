@@ -1,3 +1,4 @@
 constants:
     mininet_topo: custom
-    network_discovery_time: 25
+    network_discovery_time: 40
+    agent_da_q: 14
