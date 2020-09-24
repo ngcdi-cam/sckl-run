@@ -40,3 +40,5 @@ $ python3 run_experiments.py
 ```
 
 To disable/enable certain experiments, just add/remove comments before desired `run_experiment_group` function calls near line 221 in `run_experiments.py`. All experiments are enabled by default.
+
+Experiment outputs and logs are saved automatically in `runs` directory, grouped by experiment name.
