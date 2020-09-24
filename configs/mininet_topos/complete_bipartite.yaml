@@ -1,2 +1,3 @@
 constants:
     mininet_topo: custom_complete_bipartite
+    network_discovery_time: 25

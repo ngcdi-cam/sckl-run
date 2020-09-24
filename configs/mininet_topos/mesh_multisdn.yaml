@@ -1,0 +1,12 @@
+constants:
+    network_discovery_time: 20
+    awareness_q: 2
+    mininet_switch: multi,cmap=s1:c0|s2:c1|s3:c1|s4:c0|s5:c0|s6:c1|s7:c0|s8:c0|s9:c1
+    mininet_controllers: awareness1 awareness2
+    awareness_server_url: http://awareness1:8080,http://awareness2:8080
+
+    # srcDpid, srcPort, srcControllerId, dstDpid, dstPort, dstControllerId | ...
+    awareness_cross_domain_links: 1,1,0,2,1,1|5,3,0,2,3,1|5,4,0,6,3,1|8,2,0,9,2,1
+
+    # srcA:dstA1,dstA2,dstA3,...|srcB:dstB1,dstB2,dstB3,...|...
+    # core_transport_topology: c1:c3,c5|c2:c4,c7|c3:c1,c8|c4:c2,c6|c5:c1,c9|c6:c4,c8|c7:c2,c9|c8:c3,c6|c9:c5,c7

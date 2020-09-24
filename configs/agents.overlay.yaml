@@ -4,4 +4,4 @@ constants:
   prometheus_q: 0
   agent_sm_q: 1
   agent_fp_q: 1
-  agent_da_q: 14
+  agent_da_q: 9

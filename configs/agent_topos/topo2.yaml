@@ -1,0 +1,4 @@
+constants:
+    da_launcher: awareness,agtopo2
+    agent_sm_q: 0
+    core_neighbours: c1

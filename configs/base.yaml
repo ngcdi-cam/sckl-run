@@ -29,11 +29,18 @@ constants:
   ^sckl_core_log_dir: $base_dir++/runs/++$run_name++/
   ^sckl_data_dir: $base_dir++/sckl-data/condition
 
-  awareness_hostname: awareness
+  mininet_controllers: awareness1
   mininet_hostname: mininet
+  mininet_switch: ovs
+  mininet_server_url: http://++$mininet_hostname++:8081
 
-  ^awareness_server_url: http://++$awareness_hostname++:8080
-  ^mininet_server_url: http://++$mininet_hostname++:8081
+  awareness_hostname_prefix: awareness
+  awareness_server_url: http://++$awareness_hostname_prefix++1:8080
+  awareness_cross_domain_links: ""
+
+  core_transport_topology: ""
+  core_neighbours: ""
+  da_launcher: "awareness,agtopo4"
 
   ^agent_common_config:
     image: ngcdi/sckl-demo:0.6
@@ -57,12 +64,15 @@ constants:
       - api/push_intent
       LEFT_NEIGHBOUR: "seed0"
       RIGHT_NEIGHBOUR: "seed1"
-      NEIGHBOURS: c1,c2,c3,c4,c5,c6,c7,c8,c9
-      AWARENESS_SERVER_URL: $^awareness_server_url
+      NEIGHBOURS: $core_neighbours
+      AWARENESS_SERVER_URL: $awareness_server_url
       UI_URL: ""
       MONITORING_URL: /stats/port/
       NODES: ++$agent_da_q
       KEY_SERVICES: $key_services
+      AWARENESS_CROSS_DOMAIN_LINKS: $awareness_cross_domain_links
+      TRANSPORT_TOPOLOGY: $core_transport_topology
+      DA_LAUNCHER: $da_launcher
     volumes:
       $^sckl_data_dir:
         bind: /data
@@ -197,16 +207,19 @@ groups:
               mode: rw
     
   awareness:
-    # currently only supports 0 or 1 awareness (based on Ryu) instances
     containers: $awareness_q
     rules:
       - value:
-          name: $awareness_hostname
-          hostname: $awareness_hostname
           image: mbyzhang/awareness
           network: $network_name
           environment:
-            MININET_SERVER_URL: $^mininet_server_url
+            MININET_SERVER_URL: $mininet_server_url
+      - target: [name, hostname]
+        value: $awareness_hostname_prefix++$id
+        local_constants:
+          - name: id
+            type: auto_increment
+            start: 1
   
     
   mininet:
@@ -219,13 +232,15 @@ groups:
           image: mbyzhang/mininet
           privileged: True
           environment:
-            MN_CONTROLLER_HOST: $awareness_hostname
+            MN_CONTROLLERS: $mininet_controllers
             MN_TOPO: $mininet_topo
+            MN_SWITCH: $mininet_switch
           command: ""
           network: $network_name
     hooks:
       postup-global:
         commands:
+          - echo "Waiting for network topology discovery"
           - test $MININET_Q -ge 1 && sleep $TIME
         environment:
           - name: MININET_Q
@@ -253,7 +268,7 @@ groups:
   digital_assets:
     constants:
       name_prefix: c
-      launcher: digiasset
+      launcher: digiAssetCustomArg
       key_services: ""
     containers: $agent_da_q
     rules: $^agent_common_rules

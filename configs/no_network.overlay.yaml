@@ -1,0 +1,4 @@
+constants:
+    mininet_q: 0
+    awareness_q: 0
+  

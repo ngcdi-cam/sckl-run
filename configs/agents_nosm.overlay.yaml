@@ -1,7 +1,0 @@
-constants:
-    agent_sm_q: 0
-
-groups:
-    digital_assets:
-        constants:
-            launcher: digiAssetStandalone

@@ -1,0 +1,6 @@
+constants:
+    mininet_topo: custom_mesh
+    network_discovery_time: 20
+
+    # srcA:dstA1,dstA2,dstA3,...|srcB:dstB1,dstB2,dstB3,...|...
+    core_transport_topology: c1:c3,c5|c2:c4,c7|c3:c1,c8|c4:c2,c6|c5:c1,c9|c6:c4,c8|c7:c2,c9|c8:c3,c6|c9:c5,c7
