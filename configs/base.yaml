@@ -235,8 +235,9 @@ groups:
             MN_CONTROLLERS: $mininet_controllers
             MN_TOPO: $mininet_topo
             MN_SWITCH: $mininet_switch
-          command: ""
+          command: /mnscripts/mininet_rest rest-cli
           network: $network_name
+          stdin_open: True
     hooks:
       postup-global:
         commands:
