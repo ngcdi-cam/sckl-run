@@ -59,6 +59,9 @@ def awareness_compute_potential_paths(throughput, threshold):
     throughput_raw = map(lambda x: (x['src'], x['dst']), filter(
         lambda x: x['throughput'] > threshold, throughput))
     topo = {}
+    # print("====start throughput_raw=======")
+    # [ print(str(el)) for el in throughput_raw ]
+    # print("====end throughput_raw=======")
     for (src, dst) in throughput_raw:
         topo.setdefault(src, [])
         topo[src].append(dst)
@@ -82,13 +85,13 @@ def awareness_compute_potential_paths(throughput, threshold):
                 cur_switch = peer
                 updated = True
                 break
-        
+
         if not updated:
             break
-    
+
     if path[0] > path[-1]:
         path = path[::-1]
-    
+
     return path
 
 def awareness_set_access_table_pinning(url, dpid, ip, port):
@@ -159,11 +162,11 @@ def mininet_trigger_traffic(file, duration=3):
         data=cmd)
 
 
-def run_experiment(name, ext_agent_configs: list = [], ext_network_configs: list = [], run_agents=False):
+def run_experiment(name, ext_agent_configs: list = [], ext_network_configs: list = [], run_agents=False, iterations: int =1):
     global MININET_URL, AWARENESS_URL
 
     os.makedirs('runs', exist_ok=True)
-    
+
     with open('runs/{}.log'.format(name), 'w') as log:
         logging.info('Starting experiment ' + name)
 
@@ -196,9 +199,9 @@ def run_experiment(name, ext_agent_configs: list = [], ext_network_configs: list
             logging.info('Starting agents...')
             subprocess.run([RUN_CONTAINERS, '-w', 'run_name', name,
                             BASE_CONFIG, AGENTS_CONFIG, *ext_network_configs, *ext_agent_configs, NO_NETWORK_CONFIG])
-        
-        for i in range(20):
-            logging.info('Run ' + str(i))
+
+        for i in range(iterations):
+            logging.info('Iteration ' + str(i))
             mininet_trigger_traffic(log, 10)
             throughput = log_awareness_throughput(log)
             log_awareness_computed_path(log, throughput, 80)
@@ -206,22 +209,41 @@ def run_experiment(name, ext_agent_configs: list = [], ext_network_configs: list
             log_awareness_services(log)
 
 
-def run_experiment_group(network_topo, agent_topo):
+def run_experiment_group(rtype, network_topo, agent_topo: str ='off'):
+    
     network_topo_file = os.path.join(MININET_TOPO_BASE_DIR, network_topo + '.yaml')
-    agent_topo_file = os.path.join(AGENT_TOPO_BASE_DIR, agent_topo + '.yaml')
-    prefix = network_topo + '_ag' + agent_topo
-
-    run_experiment(prefix + '_plain_awareness', [], [network_topo_file])
-    run_experiment(prefix + '_agents_without_overheating', [NO_SCKL_DATA_CONFIG, agent_topo_file], [network_topo_file], True)
-    run_experiment(prefix + '_agents_with_overheating', [agent_topo_file], [network_topo_file], True)
+    mininet = [network_topo_file]
+        
+    #agent config
+    if(rtype == 'netm_on_conm_on'):
+        agent_topo_file = os.path.join(AGENT_TOPO_BASE_DIR, agent_topo + '.yaml')
+        agents=[agent_topo_file]
+        flag=True
+        prefix = network_topo + '_ag_' + agent_topo
+        
+    elif (rtype == 'netm_on_conm_off'):
+        agent_topo_file = os.path.join(AGENT_TOPO_BASE_DIR, agent_topo + '.yaml')
+        agents=[NO_SCKL_DATA_CONFIG, agent_topo_file]
+        flag=True
+        prefix = network_topo + '_ag_' + agent_topo
+        
+    else: #agents off
+        agents=[]
+        flag=False
+        prefix = network_topo
+        
+    
+    iterations = 5
+    
+    for i in range(1,2,1):
+        name = rtype +'_'+ prefix +'_'+ str(i)        
+        run_experiment(name, agents, mininet, flag, iterations)
 
 if __name__ == '__main__':
-    run_experiment_group('mesh', 'topo1')
-    run_experiment_group('mesh', 'topo2')
-    run_experiment_group('mesh', 'topo3')
-    run_experiment_group('mesh', 'topo4')
-    run_experiment_group('mesh_indirect', 'topo4_indirect')
-    run_experiment_group('mesh_multisdn', 'topo4')
-    run_experiment_group('custom', 'topo4')
-    run_experiment_group('ring', 'topo4')
-    run_experiment_group('complete_bipartite', 'topo4')
+    rtypes = ['ag_off','netm_on_conm_on','netm_on_conm_off']
+    ag_topos = ['topo1','topo3','topo4','topo4_indirect']
+    netw_topos = ['mesh','ring','small_world','scale_free','custom','mesh_indirect','ring_indirect','mesh_multisdn','complete_bipartite']
+    
+    run_experiment_group(rtypes[0],netw_topos[2])
+    run_experiment_group(rtypes[1],netw_topos[2],ag_topos[0])
+    
