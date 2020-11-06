@@ -240,7 +240,7 @@ def run_experiment_group(rtype, network_topo, agent_topo: str ='off'):
         prefix = network_topo
         
     
-    iterations = 5
+    iterations = 20
     runs = 3
     
     for i in range(1,runs+1,1):
@@ -252,10 +252,12 @@ def run_experiment_group(rtype, network_topo, agent_topo: str ='off'):
 
 if __name__ == '__main__':
     rtypes = ['ag_off','netm_on_conm_on','netm_on_conm_off']
-    ag_topos = ['topo1','topo3','topo4','topo4_indirect']
-    netw_topos = ['mesh','ring','small_world','scale_free','custom','mesh_indirect','ring_indirect','mesh_multisdn','complete_bipartite']
+    ag_topos = ['topo1','topo3','topo4']#,'topo4_indirect']
+    netw_topos = ['mesh','ring','small_world','scale_free']#,'custom','mesh_indirect','ring_indirect','mesh_multisdn','complete_bipartite']
     
     #run_experiment_group(rtypes[0],netw_topos[2])
-    run_experiment_group(rtypes[1],netw_topos[4],ag_topos[0])
+    for agt in ag_topos:
+        for nwt in netw_topos:
+            run_experiment_group(rtypes[1],nwt,agt)
     
     ifx_csv.build_monitoring_csvs("batch1")
