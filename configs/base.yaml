@@ -16,7 +16,7 @@ constants:
   mininet_topo: custom_mesh
 
   network_discovery_time: 40 # in seconds
-  
+
   # ==================
   # internal constants
   # ==================
@@ -59,7 +59,7 @@ constants:
       NETW_SERVER: mininet
       NETW_PORT: 9081
       NETW_API_KEY: ""
-      NETW_URLS: 
+      NETW_URLS:
       - api/get_intent
       - api/push_intent
       LEFT_NEIGHBOUR: "seed0"
@@ -77,7 +77,7 @@ constants:
       $^sckl_data_dir:
         bind: /data
         mode: ro
-  
+
   ^agent_common_rules:
     - value: $^agent_common_config
     - target: [name, hostname, environment->CLUSTER_IP]
@@ -95,14 +95,14 @@ constants:
           type: auto_increment
           start: 1
     - target: volumes->$^sckl_core_log_dir++$name++.log
-      value: 
+      value:
         bind: /opt/docker/logs/app.log
         mode: rw
       local_constants:
         - name: name
           type: from_property
           source: name
-  
+
   ^agent_common_hooks:
     preup:
       commands:
@@ -128,7 +128,7 @@ groups:
 
     rules:
       # if you are wondering why there is no "target" specified, see examples/7-tricks.yaml
-      - value: 
+      - value:
           image: influxdb:1.7
           command: ""
           name: influxdb1
@@ -143,13 +143,14 @@ groups:
             8086: 18086
           environment:
             INFLUXDB_DB: $influxdb_name
-  
+
   cadvisor:
     containers: $cadvisor_q
+
     rules:
-      - value: 
+      - value:
           image: google/cadvisor:latest
-          command: 
+          command:
           name: cadvisor1
           privileged: True
           mem_limit: 350m
@@ -174,8 +175,8 @@ groups:
             storage_driver: influxdb
             storage_driver_db: $influxdb_name
             storage_driver_host: influxdb1:8086
-  
-  prometheus: 
+
+  prometheus:
     containers: $prometheus_q
     hooks:
       preup-global:
@@ -196,7 +197,7 @@ groups:
           mem_limit: 500m
           mem_reservation: 450m
           network: $network_name
-          ports: 
+          ports:
             9091: 9090
           volumes:
             $base_dir++/configs/prometheus/config.yml:
@@ -205,13 +206,16 @@ groups:
             prom1_vol:
               bind: /prometheus
               mode: rw
-    
+
   awareness:
     containers: $awareness_q
     rules:
       - value:
-          image: mbyzhang/awareness
+          image: mperhez/awareness
           network: $network_name
+          ports:
+            6633: 6633
+            8080: 8080
           environment:
             MININET_SERVER_URL: $mininet_server_url
       - target: [name, hostname]
@@ -220,8 +224,8 @@ groups:
           - name: id
             type: auto_increment
             start: 1
-  
-    
+
+
   mininet:
     # currently only supports 0 or 1 mininet instances
     containers: $mininet_q
@@ -265,7 +269,7 @@ groups:
     containers: $agent_fp_q
     rules: $^agent_common_rules
     hooks: $^agent_common_hooks
-  
+
   digital_assets:
     constants:
       name_prefix: c
@@ -274,5 +278,3 @@ groups:
     containers: $agent_da_q
     rules: $^agent_common_rules
     hooks: $^agent_common_hooks
-
-

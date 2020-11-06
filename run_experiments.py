@@ -6,6 +6,7 @@ import time
 import logging
 import json
 import os
+import ifxdb_to_csv as ifx_csv
 
 logging.basicConfig(
     level='INFO', format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
@@ -16,7 +17,8 @@ BASE_CONFIG = 'configs/base.yaml'
 NETWORK_CONFIG = 'configs/network.overlay.yaml'
 AGENTS_CONFIG = 'configs/agents.overlay.yaml'
 NO_SCKL_DATA_CONFIG = 'configs/no_sckl_data.overlay.yaml'
-NO_SCKL_SM_CONFIG = 'configs/agents_nosm.overlay.yaml'
+
+# NO_SCKL_SM_CONFIG = 'configs/agents_nosm.overlay.yaml' # deprecated
 NO_NETWORK_CONFIG = 'configs/no_network.overlay.yaml'
 
 MININET_TOPO_BASE_DIR = 'configs/mininet_topos'
@@ -170,8 +172,9 @@ def run_experiment(name, ext_agent_configs: list = [], ext_network_configs: list
     with open('runs/{}.log'.format(name), 'w') as log:
         logging.info('Starting experiment ' + name)
 
-        clean_containers()
-
+        # replace in the config file as for some reason it is not updating the prometheus config with the run name in advance
+        subprocess.run(['sed','-i', 's/default_run/'+name+'/g', BASE_CONFIG])
+        
         logging.info('Starting mininet and awareness...')
         subprocess.run([RUN_CONTAINERS, BASE_CONFIG, NETWORK_CONFIG, *ext_network_configs])
 
@@ -207,7 +210,11 @@ def run_experiment(name, ext_agent_configs: list = [], ext_network_configs: list
             log_awareness_computed_path(log, throughput, 80)
             log_awareness_switch_weights(log)
             log_awareness_services(log)
-
+        
+        
+        
+        #rollback base config for next run
+        subprocess.run(['sed','-i', 's/'+name+'/default_run/g', BASE_CONFIG])
 
 def run_experiment_group(rtype, network_topo, agent_topo: str ='off'):
     
@@ -234,16 +241,21 @@ def run_experiment_group(rtype, network_topo, agent_topo: str ='off'):
         
     
     iterations = 5
+    runs = 3
     
-    for i in range(1,2,1):
+    for i in range(1,runs+1,1):
+        clean_containers()
+        time.sleep(15) # allow some time to remove containers 
         name = rtype +'_'+ prefix +'_'+ str(i)        
         run_experiment(name, agents, mininet, flag, iterations)
+        logging.info("FINISHES HERE")
 
 if __name__ == '__main__':
     rtypes = ['ag_off','netm_on_conm_on','netm_on_conm_off']
     ag_topos = ['topo1','topo3','topo4','topo4_indirect']
     netw_topos = ['mesh','ring','small_world','scale_free','custom','mesh_indirect','ring_indirect','mesh_multisdn','complete_bipartite']
     
-    run_experiment_group(rtypes[0],netw_topos[2])
-    run_experiment_group(rtypes[1],netw_topos[2],ag_topos[0])
+    #run_experiment_group(rtypes[0],netw_topos[2])
+    run_experiment_group(rtypes[1],netw_topos[4],ag_topos[0])
     
+    ifx_csv.build_monitoring_csvs("batch1")
