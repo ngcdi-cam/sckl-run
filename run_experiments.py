@@ -248,6 +248,7 @@ def run_experiment_group(rtype, network_topo, agent_topo: str ='off'):
         time.sleep(15) # allow some time to remove containers 
         name = rtype +'_'+ prefix +'_'+ str(i)        
         run_experiment(name, agents, mininet, flag, iterations)
+        ifx_csv.build_monitoring_csvs(name)
         logging.info("FINISHES HERE")
 
 if __name__ == '__main__':
@@ -259,5 +260,3 @@ if __name__ == '__main__':
     for agt in ag_topos:
         for nwt in netw_topos:
             run_experiment_group(rtypes[1],nwt,agt)
-    
-    ifx_csv.build_monitoring_csvs("batch1")

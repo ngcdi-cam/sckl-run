@@ -60,7 +60,7 @@ def build_cadvisor_df(host,suffix):
     dRun = pd.DataFrame()
 
     for metric in cadvisor_metrics:
-        sqlAgs = getAgentQuery(cadvisor_metrics[idx])
+        sqlAgs = getAgentQuery(cadvisor_metrics[idx],suffix)
         print(sqlAgs)
         dAgs = runQuery(sqlAgs,c,['time','name','job','value'])
         dAgs.columns = ['time','name','job',metric]
@@ -136,7 +136,7 @@ def build_sckl_df(host,suffix):
     dfRunTM.to_csv(data_dir+"sckl-timers-"+suffix+".csv", index= False, header = True, line_terminator = "\n")
 
 
-def getAgentQuery(series):
+def getAgentQuery(series,job):
     image = sckl_core_img
     #series = 'container_memory_usage_bytes'
 
@@ -151,6 +151,7 @@ def getAgentQuery(series):
 
     #condition
     sql += 'WHERE "image" = \''+ image +'\' '
+    sql += 'AND "job" = \''+ job +'_ca1\' '
     sql += 'GROUP BY "name"'
     return sql
 
@@ -221,7 +222,7 @@ def getScklTimeMeasurements():
     return sql
 
 def runQuery(sql,client, cols):
-    rs = client.query(sql)
+    rs = client.query(sql,chunked=True)
 
     listResults = list(rs.get_points())
     # print('Results')
