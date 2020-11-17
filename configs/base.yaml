@@ -211,7 +211,7 @@ groups:
     containers: $awareness_q
     rules:
       - value:
-          image: mperhez/awareness
+          image: mbyzhang/awareness
           network: $network_name
           ports:
             6633: 6633
