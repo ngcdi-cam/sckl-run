@@ -241,22 +241,22 @@ def run_experiment_group(rtype, network_topo, agent_topo: str ='off'):
         
     
     iterations = 20
-    runs = 3
+    runs = 1
     
     for i in range(1,runs+1,1):
         clean_containers()
         time.sleep(15) # allow some time to remove containers 
         name = rtype +'_'+ prefix +'_'+ str(i)        
         run_experiment(name, agents, mininet, flag, iterations)
-        ifx_csv.build_monitoring_csvs(name)
+        #ifx_csv.build_monitoring_csvs(name)
         logging.info("FINISHES HERE")
 
 if __name__ == '__main__':
     rtypes = ['ag_off','netm_on_conm_on','netm_on_conm_off']
-    ag_topos = ['topo1','topo3','topo4']#,'topo4_indirect']
-    netw_topos = ['mesh','ring','small_world','scale_free']#,'custom','mesh_indirect','ring_indirect','mesh_multisdn','complete_bipartite']
+    #ag_topos = ['topo1','topo3','topo4']#,'topo4_indirect']
+    ag_topos = ['topo3']
+    netw_topos = ['mesh']#,'ring','small_world','scale_free']#,'custom','mesh_indirect','ring_indirect','mesh_multisdn','complete_bipartite']
     
-    #run_experiment_group(rtypes[0],netw_topos[2])
     for agt in ag_topos:
         for nwt in netw_topos:
-            run_experiment_group(rtypes[1],nwt,agt)
+            run_experiment_group(rtypes[0],nwt,agt)
