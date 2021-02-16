@@ -6,7 +6,7 @@ import time
 import logging
 import json
 import os
-import ifxdb_to_csv as ifx_csv
+#import ifxdb_to_csv as ifx_csv
 
 logging.basicConfig(
     level='INFO', format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
