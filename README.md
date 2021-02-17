@@ -3,7 +3,7 @@
 ## Building sckl-core
 
 ```
-$ git clone https://github.com/ngcdi-cam/sckl-core -b dev --depth=1
+$ git clone https://github.com/ngcdi-cam/sckl-core --depth=1
 $ cd sckl-core
 $ sbt docker:publishLocal
 $ cd ..
