@@ -1,7 +1,2 @@
 constants:
-  influxdb_q: 0
-  cadvisor_q: 0
-  prometheus_q: 0
-  agent_sm_q: 1
-  agent_fp_q: 1
   agent_da_q: 9

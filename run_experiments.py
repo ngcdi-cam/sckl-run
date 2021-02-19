@@ -17,6 +17,9 @@ BASE_CONFIG = 'configs/base.yaml'
 NETWORK_CONFIG = 'configs/network.overlay.yaml'
 AGENTS_CONFIG = 'configs/agents.overlay.yaml'
 NO_SCKL_DATA_CONFIG = 'configs/no_sckl_data.overlay.yaml'
+MN_CONFIG = 'configs/mininet-only.yaml'
+INFR_AGENTS_CONFIG = 'configs/infragents.overlay.yaml'
+SMAGENTS_CONFIG  = 'configs/smagents.overlay.yaml'
 
 # NO_SCKL_SM_CONFIG = 'configs/agents_nosm.overlay.yaml' # deprecated
 NO_NETWORK_CONFIG = 'configs/no_network.overlay.yaml'
@@ -26,10 +29,16 @@ AGENT_TOPO_BASE_DIR = 'configs/agent_topos'
 
 
 def get_ip_address_of_container(name):
-    return subprocess.run(
-        ['docker', 'inspect', '-f',
-            '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}', name],
-        capture_output=True).stdout.decode('ascii').rstrip('\n')
+    #return subprocess.run(
+    #    ['docker', 'inspect', '-f',
+    #        '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}', name],
+    #    capture_output=True).stdout.decode('ascii').rstrip('\n')
+    ps=subprocess.Popen(['docker','inspect','-f',
+         '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}',
+         name],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    output=ps.communicate()[0]
+    ip_addr=output.decode('ascii').rstrip('\n')
+    return ip_addr
 
 
 def clean_containers():
@@ -174,9 +183,13 @@ def run_experiment(name, ext_agent_configs: list = [], ext_network_configs: list
 
         # replace in the config file as for some reason it is not updating the prometheus config with the run name in advance
         subprocess.run(['sed','-i', 's/default_run/'+name+'/g', BASE_CONFIG])
-        
-        logging.info('Starting mininet and awareness...')
+
+        logging.info('Starting awareness...')
         subprocess.run([RUN_CONTAINERS, BASE_CONFIG, NETWORK_CONFIG, *ext_network_configs])
+
+        logging.info('Starting mininet...')
+        subprocess.run([RUN_CONTAINERS, BASE_CONFIG,MN_CONFIG , *ext_network_configs])
+
 
         MININET_URL = 'http://{}:8081'.format(
             get_ip_address_of_container('mininet'))
@@ -199,6 +212,13 @@ def run_experiment(name, ext_agent_configs: list = [], ext_network_configs: list
             time.sleep(30)
 
         if run_agents:
+            logging.info('Starting prov...')
+            subprocess.run([RUN_CONTAINERS, '-w', 'run_name', name,
+                            BASE_CONFIG, INFR_AGENTS_CONFIG, NO_NETWORK_CONFIG])
+            #comment next 2 lines for topos != topo1 in case seed1 is not started before agents and set agent_sm_q: 0 in  configs/agent_topos/topo1.yaml
+            #logging.info('Starting sm....')
+            #subprocess.run([RUN_CONTAINERS, '-w', 'run_name', name,
+            #                BASE_CONFIG, SMAGENTS_CONFIG, NO_NETWORK_CONFIG])
             logging.info('Starting agents...')
             subprocess.run([RUN_CONTAINERS, '-w', 'run_name', name,
                             BASE_CONFIG, AGENTS_CONFIG, *ext_network_configs, *ext_agent_configs, NO_NETWORK_CONFIG])
@@ -254,9 +274,9 @@ def run_experiment_group(rtype, network_topo, agent_topo: str ='off'):
 if __name__ == '__main__':
     rtypes = ['ag_off','netm_on_conm_on','netm_on_conm_off']
     #ag_topos = ['topo1','topo3','topo4']#,'topo4_indirect']
-    ag_topos = ['topo3']
-    netw_topos = ['mesh']#,'ring','small_world','scale_free']#,'custom','mesh_indirect','ring_indirect','mesh_multisdn','complete_bipartite']
+    ag_topos = ['topo4']
+    netw_topos = ['mesh']#,'mesh','ring','small_world','scale_free']#,'custom','mesh_indirect','ring_indirect','mesh_multisdn','complete_bipartite']
     
     for agt in ag_topos:
         for nwt in netw_topos:
-            run_experiment_group(rtypes[0],nwt,agt)
+            run_experiment_group(rtypes[1],nwt,agt)

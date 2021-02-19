@@ -1,3 +1,3 @@
 constants:
     mininet_topo: custom_mesh
-    network_discovery_time: 60
+    network_discovery_time: 30

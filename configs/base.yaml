@@ -1,7 +1,7 @@
 # run_containers.py base.yaml full.overlay.yaml
 
 constants:
-  run_name: default_run
+  run_name: netm_on_conm_on_ring_ag_topo1_1
 
   influxdb_q: 0
   cadvisor_q: 0
@@ -32,15 +32,15 @@ constants:
   mininet_controllers: awareness1
   mininet_hostname: mininet
   mininet_switch: ovs
-  mininet_server_url: http://++$mininet_hostname++:8081
+  mininet_server_url: http://mininet:8081
 
   awareness_hostname_prefix: awareness
-  awareness_server_url: http://++$awareness_hostname_prefix++1:8080
+  awareness_server_url: http://awareness1:8080
   awareness_cross_domain_links: ""
 
   core_transport_topology: ""
   core_neighbours: ""
-  da_launcher: "awareness,agtopo4"
+  da_launcher: "awareness,agtopo1"
 
   ^agent_common_config:
     image: ngcdi/sckl-demo:0.6
@@ -219,7 +219,7 @@ groups:
           environment:
             MININET_SERVER_URL: $mininet_server_url
       - target: [name, hostname]
-        value: $awareness_hostname_prefix++$id
+        value: awareness1
         local_constants:
           - name: id
             type: auto_increment
@@ -231,8 +231,8 @@ groups:
     containers: $mininet_q
     rules:
       - value:
-          name: $mininet_hostname
-          hostname: $mininet_hostname
+          name: mininet
+          hostname: mininet
           image: mbyzhang/mininet
           privileged: True
           environment:
